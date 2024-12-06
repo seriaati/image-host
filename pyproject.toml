@@ -1,0 +1,15 @@
+[project]
+name = "image-host"
+version = "0.1.0"
+description = "Basically imgur"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiofiles>=24.1.0",
+    "aiohttp>=3.11.10",
+    "fastapi>=0.115.6",
+    "python-dotenv>=1.0.1",
+    "uvicorn>=0.32.1",
+]
+license = { file = "LICENSE" }
+authors = [{ name = "seriaati", email = "seria.ati@gmail.com" }]
