@@ -1,12 +1,13 @@
 from dotenv import load_dotenv
 import fastapi
-import pydantic
+from pydantic import BaseModel
 import os
 import aiofiles
 import aiohttp
 import string
 import base64
 import random
+import uvicorn
 
 load_dotenv()
 API_KEY = os.environ["API_KEY"]
@@ -14,7 +15,7 @@ API_KEY = os.environ["API_KEY"]
 app = fastapi.FastAPI()
 
 
-class UploadFileData(pydantic.BaseModel):
+class UploadFileData(BaseModel):
     key: str
     source: str  # URL or base64-encoded data
 
@@ -46,3 +47,6 @@ async def upload_file(data: UploadFileData) -> fastapi.responses.JSONResponse:
 @app.get("/{filename}")
 async def get_file(filename: str) -> fastapi.responses.FileResponse:
     return fastapi.responses.FileResponse(f"files/{filename}")
+
+
+uvicorn.run(app, port=9078)
