@@ -41,3 +41,8 @@ async def upload_file(data: UploadFileData) -> fastapi.responses.JSONResponse:
         await file.write(content)
 
     return fastapi.responses.JSONResponse(content={"filename": f"{filename}.png"})
+
+
+@app.get("/{filename}")
+async def get_file(filename: str) -> fastapi.responses.FileResponse:
+    return fastapi.responses.FileResponse(f"files/{filename}")
