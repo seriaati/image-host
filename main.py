@@ -10,6 +10,7 @@ import random
 import uvicorn
 
 load_dotenv()
+REPO_URL = "https://github.com/seriaati/image-host"
 API_KEY = os.environ["API_KEY"]
 
 app = fastapi.FastAPI()
@@ -18,6 +19,11 @@ app = fastapi.FastAPI()
 class UploadFileData(BaseModel):
     key: str
     source: str  # URL or base64-encoded data
+
+
+@app.get("/")
+async def index() -> fastapi.responses.RedirectResponse:
+    return fastapi.responses.RedirectResponse(REPO_URL)
 
 
 @app.post("/upload")
@@ -44,9 +50,20 @@ async def upload_file(data: UploadFileData) -> fastapi.responses.JSONResponse:
     return fastapi.responses.JSONResponse(content={"filename": f"{filename}.png"})
 
 
+@app.delete("/{filename}")
+async def delete_file(filename: str) -> fastapi.responses.JSONResponse:
+    try:
+        os.remove(f"files/{filename}")
+    except FileNotFoundError:
+        raise fastapi.HTTPException(status_code=404, detail="File not found")
+
+    return fastapi.responses.JSONResponse(content={"message": "File deleted"})
+
+
 @app.get("/{filename}")
 async def get_file(filename: str) -> fastapi.responses.FileResponse:
     return fastapi.responses.FileResponse(f"files/{filename}")
 
 
-uvicorn.run(app, port=9078)
+if __name__ == "__main__":
+    uvicorn.run(app, port=9078)
