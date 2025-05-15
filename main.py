@@ -28,6 +28,16 @@ async def index() -> fastapi.responses.RedirectResponse:
     return fastapi.responses.RedirectResponse(REPO_URL)
 
 
+@app.get("/favicon.ico")
+async def favicon() -> fastapi.responses.Response:
+    return fastapi.responses.Response(status_code=204)
+
+
+@app.get("/robots.txt")
+async def robots() -> fastapi.responses.PlainTextResponse:
+    return fastapi.responses.PlainTextResponse("User-agent: *\nDisallow: /")
+
+
 @app.post("/upload")
 async def upload_file(data: UploadFileData) -> fastapi.responses.JSONResponse:
     if data.key != API_KEY:
