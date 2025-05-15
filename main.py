@@ -71,5 +71,27 @@ async def get_file(filename: str) -> fastapi.responses.FileResponse:
     return fastapi.responses.FileResponse(f"files/{filename}")
 
 
+@app.get("/files")
+async def list_files() -> fastapi.responses.JSONResponse:
+    try:
+        files = await aiofiles.os.listdir("files")
+    except FileNotFoundError:
+        raise fastapi.HTTPException(status_code=404, detail="Directory not found")
+
+    files.remove(".gitkeep")
+    return fastapi.responses.JSONResponse(content={"files": files})
+
+
+@app.get("/files/count")
+async def count_files() -> fastapi.responses.JSONResponse:
+    try:
+        files = await aiofiles.os.listdir("files")
+    except FileNotFoundError:
+        raise fastapi.HTTPException(status_code=404, detail="Directory not found")
+
+    files.remove(".gitkeep")
+    return fastapi.responses.JSONResponse(content={"count": len(files)})
+
+
 if __name__ == "__main__":
     uvicorn.run(app, port=9078)
