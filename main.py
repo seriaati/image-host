@@ -12,6 +12,7 @@ import uvicorn
 load_dotenv()
 REPO_URL = "https://github.com/seriaati/image-host"
 API_KEY = os.environ["API_KEY"]
+FILESIZE_LIMIT = 10 * 1024 * 1024  # 10 MB
 
 app = fastapi.FastAPI()
 
@@ -39,6 +40,10 @@ async def upload_file(data: UploadFileData) -> fastapi.responses.JSONResponse:
                 content = await response.read()
     else:
         content = base64.b64decode(data.source)
+        
+    # Check file size
+    if len(content) > FILESIZE_LIMIT:
+        raise fastapi.HTTPException(status_code=413, detail="File size exceeds limit")
 
     # Generate random filename
     filename = "".join(random.choices(string.ascii_letters, k=16))
