@@ -66,24 +66,6 @@ async def upload_file(data: UploadFileData) -> fastapi.responses.JSONResponse:
     return fastapi.responses.JSONResponse(content={"filename": f"{filename}.png"})
 
 
-@app.delete("/{filename}")
-async def delete_file(filename: str) -> fastapi.responses.JSONResponse:
-    try:
-        await aiofiles.os.remove(f"files/{filename}")
-    except FileNotFoundError:
-        raise fastapi.HTTPException(status_code=404, detail="File not found")
-
-    return fastapi.responses.JSONResponse(content={"message": "File deleted"})
-
-
-@app.get("/{filename}")
-async def get_file(filename: str) -> fastapi.responses.FileResponse:
-    try:
-        return fastapi.responses.FileResponse(f"files/{filename}")
-    except FileNotFoundError:
-        raise fastapi.HTTPException(status_code=404, detail="File not found")
-
-
 @app.get("/files")
 async def list_files() -> fastapi.responses.JSONResponse:
     try:
@@ -104,6 +86,24 @@ async def count_files() -> fastapi.responses.JSONResponse:
 
     files.remove(".gitkeep")
     return fastapi.responses.JSONResponse(content={"count": len(files)})
+
+
+@app.delete("/{filename}")
+async def delete_file(filename: str) -> fastapi.responses.JSONResponse:
+    try:
+        await aiofiles.os.remove(f"files/{filename}")
+    except FileNotFoundError:
+        raise fastapi.HTTPException(status_code=404, detail="File not found")
+
+    return fastapi.responses.JSONResponse(content={"message": "File deleted"})
+
+
+@app.get("/{filename}")
+async def get_file(filename: str) -> fastapi.responses.FileResponse:
+    try:
+        return fastapi.responses.FileResponse(f"files/{filename}")
+    except FileNotFoundError:
+        raise fastapi.HTTPException(status_code=404, detail="File not found")
 
 
 if __name__ == "__main__":
