@@ -78,7 +78,10 @@ async def delete_file(filename: str) -> fastapi.responses.JSONResponse:
 
 @app.get("/{filename}")
 async def get_file(filename: str) -> fastapi.responses.FileResponse:
-    return fastapi.responses.FileResponse(f"files/{filename}")
+    try:
+        return fastapi.responses.FileResponse(f"files/{filename}")
+    except FileNotFoundError:
+        raise fastapi.HTTPException(status_code=404, detail="File not found")
 
 
 @app.get("/files")
