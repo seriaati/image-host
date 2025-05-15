@@ -3,6 +3,7 @@ import fastapi
 from pydantic import BaseModel
 import os
 import aiofiles
+import aiofiles.os
 import aiohttp
 import string
 import base64
@@ -40,7 +41,7 @@ async def upload_file(data: UploadFileData) -> fastapi.responses.JSONResponse:
                 content = await response.read()
     else:
         content = base64.b64decode(data.source)
-        
+
     # Check file size
     if len(content) > FILESIZE_LIMIT:
         raise fastapi.HTTPException(status_code=413, detail="File size exceeds limit")
@@ -58,7 +59,7 @@ async def upload_file(data: UploadFileData) -> fastapi.responses.JSONResponse:
 @app.delete("/{filename}")
 async def delete_file(filename: str) -> fastapi.responses.JSONResponse:
     try:
-        os.remove(f"files/{filename}")
+        await aiofiles.os.remove(f"files/{filename}")
     except FileNotFoundError:
         raise fastapi.HTTPException(status_code=404, detail="File not found")
 
