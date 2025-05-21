@@ -95,6 +95,23 @@ async def count_files() -> fastapi.responses.JSONResponse:
     return fastapi.responses.JSONResponse(content={"count": len(files)})
 
 
+@app.get("/files/size")
+async def total_size() -> fastapi.responses.JSONResponse:
+    try:
+        files = await aiofiles.os.listdir("files")
+    except FileNotFoundError:
+        raise fastapi.HTTPException(status_code=404, detail="Directory not found")
+
+    files.remove(".gitkeep")
+    total_size = 0
+    for file in files:
+        file_path = f"files/{file}"
+        size = await aiofiles.os.path.getsize(file_path)
+        total_size += size
+
+    return fastapi.responses.JSONResponse(content={"total_size": total_size})
+
+
 @app.delete("/{filename}")
 async def delete_file(filename: str) -> fastapi.responses.JSONResponse:
     try:
