@@ -13,7 +13,7 @@ import uvicorn
 load_dotenv()
 REPO_URL = "https://github.com/seriaati/image-host"
 API_KEY = os.environ["API_KEY"]
-FILESIZE_LIMIT = 10 * 1024 * 1024  # 10 MB
+FILESIZE_LIMIT = 20 * 1024 * 1024  # 20 MB
 
 app = fastapi.FastAPI()
 
