@@ -37,6 +37,9 @@ async def favicon() -> fastapi.responses.Response:
 async def robots() -> fastapi.responses.PlainTextResponse:
     return fastapi.responses.PlainTextResponse("User-agent: *\nDisallow: /")
 
+@app.get("/health")
+async def health_check() -> fastapi.responses.JSONResponse:
+    return fastapi.responses.JSONResponse(content={"status": "ok"})
 
 @app.post("/upload")
 async def upload_file(data: UploadFileData) -> fastapi.responses.JSONResponse:
