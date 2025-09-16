@@ -142,10 +142,7 @@ class S3StorageProvider(StorageProvider):
         async with s3_client as s3:  # pyright: ignore[reportGeneralTypeIssues]
             try:
                 await s3.put_object(
-                    Bucket=self.bucket_name,
-                    Key=filename,
-                    Body=content,
-                    ContentType="image/png",
+                    Bucket=self.bucket_name, Key=filename, Body=content, ContentType="image/png"
                 )
             except ClientError as e:
                 raise fastapi.HTTPException(
@@ -169,9 +166,7 @@ class S3StorageProvider(StorageProvider):
             except ClientError as e:
                 error_code = e.response.get("Error", {}).get("Code", "")
                 if error_code == "NoSuchKey":
-                    raise fastapi.HTTPException(
-                        status_code=404, detail="File not found"
-                    ) from e
+                    raise fastapi.HTTPException(status_code=404, detail="File not found") from e
                 raise fastapi.HTTPException(
                     status_code=500, detail=f"Failed to delete file: {e!s}"
                 ) from e
@@ -189,9 +184,7 @@ class S3StorageProvider(StorageProvider):
             endpoint = self.endpoint_url.rstrip("/")
             return f"{endpoint}/{self.bucket_name}/{filename}"
         # Standard AWS S3 URL format
-        return (
-            f"https://{self.bucket_name}.s3.{self.region}.amazonaws.com/{filename}"
-        )
+        return f"https://{self.bucket_name}.s3.{self.region}.amazonaws.com/{filename}"
 
     async def list_files(self) -> dict[str, int]:
         session = self._get_s3_session()
@@ -232,12 +225,14 @@ def get_storage_provider() -> StorageProvider:
     """Factory function to get the appropriate storage provider"""
 
     if settings.storage_type.lower() == "s3":
-        if not all([
-            settings.s3_endpoint_url,
-            settings.s3_access_key_id,
-            settings.s3_secret_access_key,
-            settings.s3_bucket_name,
-        ]):
+        if not all(
+            [
+                settings.s3_endpoint_url,
+                settings.s3_access_key_id,
+                settings.s3_secret_access_key,
+                settings.s3_bucket_name,
+            ]
+        ):
             msg = "S3 storage requires S3_ENDPOINT_URL, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, and S3_BUCKET_NAME environment variables"
             raise ValueError(msg)
 
