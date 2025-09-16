@@ -113,7 +113,7 @@ Returns service health status.
    uv sync
 
    # Or using pip
-   pip install -r requirements.txt
+   pip install .
    ```
 
 3. **Set up environment variables**:
