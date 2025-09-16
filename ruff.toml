@@ -62,6 +62,7 @@ runtime-evaluated-base-classes = [
     "pydantic.BaseModel",
     "pydantic_settings.BaseSettings",
 ]
+runtime-evaluated-decorators = ["fastapi.FastAPI.get", "fastapi.FastAPI.post"]
 
 [lint.mccabe]
 max-complexity = 15
