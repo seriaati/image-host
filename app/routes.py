@@ -32,6 +32,9 @@ def health_check() -> fastapi.responses.JSONResponse:
 
 
 async def upload_file(data: UploadFileData, storage: StorageProvider) -> fastapi.responses.JSONResponse:
+    if not settings.uploads_enabled:
+        raise fastapi.HTTPException(status_code=503, detail="Uploads are temporarily disabled")
+
     if data.key != settings.api_key:
         raise fastapi.HTTPException(status_code=403, detail="Invalid API key")
 

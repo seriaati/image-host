@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     repo_url: str = "https://github.com/seriaati/image-host"
     api_key: str = Field(..., description="API key for authentication")
     filesize_limit: int = Field(default=20 * 1024 * 1024, description="Maximum file size in bytes")
+    uploads_enabled: bool = Field(default=True, description="Whether uploading is enabled")
 
     # Storage configuration
     storage_type: str = Field(default="local", description="Storage type: 'local' or 's3'")
