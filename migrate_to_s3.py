@@ -11,6 +11,7 @@ Options:
     --local-path PATH          Path to local files directory (default: files)
     --concurrent-uploads N     Number of concurrent uploads (default: 10)
     --max-retries N            Maximum retry attempts for failed uploads (default: 3)
+    --start-from N             File index to start from (1-based, for resuming migrations)
 
 This script will:
 1. Read all files from the local files/ directory
@@ -75,6 +76,7 @@ async def migrate_files_to_s3(
     dry_run: bool = False,
     concurrent_uploads: int = 10,
     max_retries: int = 3,
+    start_from: int = 1,
 ) -> None:
     """
     Migrate files from local storage to S3.
@@ -85,6 +87,7 @@ async def migrate_files_to_s3(
         dry_run: If True, only show what would be migrated without actually doing it
         concurrent_uploads: Number of concurrent uploads (default: 10)
         max_retries: Maximum retry attempts for failed uploads (default: 3)
+        start_from: File index to start from (1-based, for resuming interrupted migrations)
     """
     print("🚀 Starting migration from local storage to S3...")
 
@@ -117,19 +120,41 @@ async def migrate_files_to_s3(
         print("ℹ️  No files found in local storage to migrate")
         return
 
-    print(f"📁 Found {len(local_files)} files to migrate")
-    total_size = sum(local_files.values())
-    print(f"📊 Total size: {format_size(total_size)}")
+    # Convert to ordered list for indexing
+    file_list = list(local_files.items())
+
+    # Validate start_from parameter
+    if start_from < 1:
+        print("❌ Error: --start-from must be >= 1")
+        return
+
+    if start_from > len(file_list):
+        print(f"❌ Error: --start-from ({start_from}) is greater than total files ({len(file_list)})")
+        return
+
+    # Calculate subset to process
+    files_to_process = file_list[start_from - 1:]  # Convert to 0-based indexing
+    skipped_count = start_from - 1
+
+    print(f"📁 Found {len(local_files)} total files")
+    if skipped_count > 0:
+        print(f"⏭️  Skipping first {skipped_count} files (resuming from #{start_from})")
+    print(f"📤 Will process {len(files_to_process)} files")
+
+    total_size = sum(size for _, size in files_to_process)
+    print(f"📊 Size to upload: {format_size(total_size)}")
     print(f"🚀 Upload settings: {concurrent_uploads} concurrent, {max_retries} max retries")
 
     if dry_run:
         print("\n🔍 DRY RUN - Files that would be migrated:")
-        for filename, size in local_files.items():
-            print(f"   • {filename} ({format_size(size)})")
+        for i, (filename, size) in enumerate(files_to_process, start_from):
+            print(f"   [{i}] {filename} ({format_size(size)})")
         return
 
     # Confirm migration
-    print(f"\n⚠️  This will upload {len(local_files)} files to S3")
+    print(f"\n⚠️  This will upload {len(files_to_process)} files to S3")
+    if skipped_count > 0:
+        print(f"⚠️  Skipping first {skipped_count} files (already processed)")
     if delete_local:
         print("⚠️  Local files will be DELETED after successful upload")
 
@@ -142,7 +167,7 @@ async def migrate_files_to_s3(
     successful_uploads = []
     failed_uploads = []
     completed_count = 0
-    total_files = len(local_files)
+    total_files = len(files_to_process)
 
     print(f"\n📤 Starting concurrent uploads ({concurrent_uploads} at a time)...")
     start_time = time.time()
@@ -150,7 +175,7 @@ async def migrate_files_to_s3(
     # Create semaphore to limit concurrent uploads
     semaphore = asyncio.Semaphore(concurrent_uploads)
 
-    async def upload_with_progress(filename: str, size: int) -> None:
+    async def upload_with_progress(filename: str, size: int, file_index: int) -> None:
         nonlocal completed_count
 
         async with semaphore:
@@ -163,18 +188,22 @@ async def migrate_files_to_s3(
             rate = completed_count / elapsed if elapsed > 0 else 0
             eta = (total_files - completed_count) / rate if rate > 0 else 0
 
+            # Show current file index in the original list
+            current_overall_index = start_from + completed_count - 1
+            total_overall_files = len(file_list)
+
             if success:
                 successful_uploads.append(result_filename)
-                print(f"✅ [{completed_count}/{total_files}] {filename} ({format_size(size)}) "
+                print(f"✅ [{current_overall_index}/{total_overall_files}] {filename} ({format_size(size)}) "
                       f"- {rate:.1f}/s - ETA: {format_time(eta)}")
             else:
                 failed_uploads.append((result_filename, error))
-                print(f"❌ [{completed_count}/{total_files}] {filename} FAILED: {error}")
+                print(f"❌ [{current_overall_index}/{total_overall_files}] {filename} FAILED: {error}")
 
     # Create tasks for all uploads
     tasks = [
-        upload_with_progress(filename, size)
-        for filename, size in local_files.items()
+        upload_with_progress(filename, size, i)
+        for i, (filename, size) in enumerate(files_to_process, start_from)
     ]
 
     # Execute all uploads concurrently
@@ -280,6 +309,12 @@ async def main() -> None:
         default=3,
         help="Maximum retry attempts for failed uploads (default: 3)",
     )
+    parser.add_argument(
+        "--start-from",
+        type=int,
+        default=1,
+        help="File index to start from (1-based, for resuming interrupted migrations)",
+    )
     args = parser.parse_args()
 
     # Verify S3 connection first
@@ -296,6 +331,7 @@ async def main() -> None:
         dry_run=args.dry_run,
         concurrent_uploads=args.concurrent_uploads,
         max_retries=args.max_retries,
+        start_from=args.start_from,
     )
 
 
